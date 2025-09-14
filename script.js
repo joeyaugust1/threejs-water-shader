@@ -384,6 +384,38 @@ function setupUI({ waterResolution, water, ground }) {
   causticsFolder.addInput(ground.material.uniforms.uCausticsThickness, 'value', {
     min: 0, max: 1, label: 'Thickness'
   });
+
+  // Add camera controls folder
+  const cameraFolder = pane.addFolder({ title: 'Camera' });
+  
+  const cameraPosition = { x: 0.5, y: 0.5, z: 0.5 };
+  
+  cameraFolder.addMonitor(camera.position, 'x', { label: 'Position X' });
+  cameraFolder.addMonitor(camera.position, 'y', { label: 'Position Y' });
+  cameraFolder.addMonitor(camera.position, 'z', { label: 'Position Z' });
+  
+  cameraFolder.addButton({ title: 'Reset Camera' }).on('click', () => {
+    camera.position.set(0.5, 0.5, 0.5);
+    camera.lookAt(0, 0, 0);
+    controls.reset();
+  });
+  
+  // Add controls info
+  const infoFolder = pane.addFolder({ title: 'Controls Info' });
+  
+  infoFolder.addBlade({
+    view: 'text',
+    label: 'Mouse Controls',
+    value: 'Left click + drag to orbit\nRight click + drag to pan\nWheel to zoom',
+    readonly: true
+  });
+  
+  infoFolder.addBlade({
+    view: 'text', 
+    label: 'Keyboard Controls',
+    value: 'W/A/S/D to move\nQ/E for up/down',
+    readonly: true
+  });
 }
 
 // Main application
@@ -406,10 +438,85 @@ const poolTexture = new THREE.TextureLoader().load('ocean_floor.png');
 scene.background = environmentMap;
 scene.environment = environmentMap;
 
-camera.position.set(0.8, 0.03, 0);
+// Better camera positioning for orbital controls
+camera.position.set(0.5, 0.5, 0.5);
+camera.lookAt(0, 0, 0);
 
+// Initialize OrbitControls with better settings
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.target.set(0, 0, 0);
+controls.enablePan = true;
+controls.enableZoom = true;
+controls.enableRotate = true;
+controls.minDistance = 0.1;
+controls.maxDistance = 10;
+controls.maxPolarAngle = Math.PI;
+
+// Make variables globally accessible for debugging
+window.scene = scene;
+window.camera = camera;
+window.controls = controls;
+window.renderer = renderer;
+
+// Add event listeners for debugging
+controls.addEventListener('change', () => {
+  console.log('Camera position:', camera.position);
+  console.log('Controls target:', controls.target);
+});
+
+controls.addEventListener('start', () => {
+  console.log('OrbitControls interaction started');
+});
+
+controls.addEventListener('end', () => {
+  console.log('OrbitControls interaction ended');
+});
+
+console.log('OrbitControls initialized:', controls);
+console.log('Initial camera position:', camera.position);
+
+// Add keyboard controls for additional movement options
+const keyState = {
+  w: false,
+  a: false,
+  s: false,
+  d: false,
+  q: false,
+  e: false
+};
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (keyState.hasOwnProperty(key)) {
+    keyState[key] = true;
+  }
+});
+
+window.addEventListener('keyup', (event) => {
+  const key = event.key.toLowerCase();
+  if (keyState.hasOwnProperty(key)) {
+    keyState[key] = false;
+  }
+});
+
+// Function to update camera position based on keyboard input
+function updateCameraMovement() {
+  const speed = 0.01;
+  const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+  const up = new THREE.Vector3(0, 1, 0);
+
+  if (keyState.w) camera.position.add(forward.clone().multiplyScalar(speed));
+  if (keyState.s) camera.position.add(forward.clone().multiplyScalar(-speed));
+  if (keyState.a) camera.position.add(right.clone().multiplyScalar(-speed));
+  if (keyState.d) camera.position.add(right.clone().multiplyScalar(speed));
+  if (keyState.q) camera.position.add(up.clone().multiplyScalar(-speed));
+  if (keyState.e) camera.position.add(up.clone().multiplyScalar(speed));
+}
+
+console.log('Keyboard controls added: W/A/S/D for movement, Q/E for up/down');
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
@@ -428,6 +535,7 @@ scene.add(ground);
 
 function animate() {
   const elapsedTime = clock.getElapsedTime();
+  updateCameraMovement(); // Update keyboard-based camera movement
   water.update(elapsedTime);
   ground.update(elapsedTime);
   controls.update();
