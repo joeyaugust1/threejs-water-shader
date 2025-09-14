@@ -442,4 +442,4 @@ window.addEventListener('resize', () => {
 });
 
 animate();
-setupUI({ waterResolution, water, ground });
+// setupUI({ waterResolution, water, ground });
