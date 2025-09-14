@@ -17,7 +17,7 @@ document.body.appendChild(renderer.domElement);
 
 // Environment map
 const cubeTextureLoader = new THREE.CubeTextureLoader();
-cubeTextureLoader.setPath('/threejs-water-shader/');
+cubeTextureLoader.setPath(import.meta.env.BASE_URL);
 const environmentMap = cubeTextureLoader.load([
   'px.png', // positive x
   'nx.png', // negative x 
@@ -27,7 +27,7 @@ const environmentMap = cubeTextureLoader.load([
   'nz.png'  // negative z
 ]);
 
-const poolTexture = new THREE.TextureLoader().load('/threejs-water-shader/ocean_floor.png');
+const poolTexture = new THREE.TextureLoader().load(import.meta.env.BASE_URL + 'ocean_floor.png');
 
 scene.background = environmentMap;
 scene.environment = environmentMap;
